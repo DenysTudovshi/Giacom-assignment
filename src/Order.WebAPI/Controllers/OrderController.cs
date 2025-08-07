@@ -1,4 +1,5 @@
-﻿using FluentValidation;
+﻿using AutoMapper;
+using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Order.Model;
@@ -16,10 +17,12 @@ namespace OrderService.WebAPI.Controllers
     public class OrderController : ControllerBase
     {
         private readonly IOrderService _orderService;
+        private readonly IMapper _mapper;
 
-        public OrderController(IOrderService orderService)
+        public OrderController(IOrderService orderService, IMapper mapper)
         {
             _orderService = orderService;
+            _mapper = mapper;
         }
 
         /// <summary>
@@ -52,18 +55,8 @@ namespace OrderService.WebAPI.Controllers
             // FluentValidation automatically validates the request and returns 400 Bad Request if validation fails
             // No need for manual ModelState.IsValid checks - validation happens before this method is called
             
-            // Map request to DTO
-            var orderDto = new Order.Model.CreateOrderDto
-            {
-                ResellerId = request.ResellerId,
-                CustomerId = request.CustomerId,
-                Items = request.Items.Select(item => new Order.Model.CreateOrderItemDto
-                {
-                    ProductId = item.ProductId,
-                    ServiceId = item.ServiceId,
-                    Quantity = item.Quantity
-                }).ToList()
-            };
+            // Map request to DTO using AutoMapper
+            var orderDto = _mapper.Map<CreateOrderDto>(request);
 
             var orderId = await _orderService.CreateOrderAsync(orderDto);
             

@@ -1,3 +1,4 @@
+using AutoMapper;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Builder;
@@ -9,12 +10,14 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Order.Data;
 using Order.Service;
+using OrderService.WebAPI.Mapping;
 using OrderService.WebAPI.Middleware;
 using OrderService.WebAPI.Models;
 using OrderService.WebAPI.Validators;
 using System;
 using System.IO;
 using System.Reflection;
+using Microsoft.Extensions.Logging;
 
 namespace OrderService.WebAPI
 {
@@ -40,6 +43,16 @@ namespace OrderService.WebAPI
 
             services.AddScoped<IOrderService, Order.Service.OrderService>();
             services.AddScoped<IOrderRepository, OrderRepository>();
+
+            // Configure AutoMapper
+            services.AddSingleton<IMapper>(provider =>
+            {
+                var loggerFactory = provider.GetRequiredService<ILoggerFactory>();
+                var configExpression = new MapperConfigurationExpression();
+                configExpression.AddProfile<MappingProfile>();
+                var mapperConfig = new MapperConfiguration(configExpression, loggerFactory);
+                return mapperConfig.CreateMapper();
+            });
 
             services.AddControllers();
             
