@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Linq;
 using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -39,6 +40,12 @@ namespace OrderService.WebAPI.Middleware
 
             switch (exception)
             {
+                case FluentValidation.ValidationException valEx:
+                    response.StatusCode = (int)HttpStatusCode.BadRequest;
+                    response.Message = "Validation failed";
+                    response.Details = string.Join("; ", valEx.Errors.Select(e => $"{e.PropertyName}: {e.ErrorMessage}"));
+                    break;
+                
                 case ArgumentNullException argNullEx:
                     response.StatusCode = (int)HttpStatusCode.BadRequest;
                     response.Message = "Missing required parameter";
