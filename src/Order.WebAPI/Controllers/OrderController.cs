@@ -45,9 +45,9 @@ namespace OrderService.WebAPI.Controllers
         /// <response code="500">Internal server error occurred</response>
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request)
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> Create([FromBody] CreateOrderRequest request)
         {
             // FluentValidation automatically validates the request and returns 400 Bad Request if validation fails
             // No need for manual ModelState.IsValid checks - validation happens before this method is called
@@ -82,7 +82,7 @@ namespace OrderService.WebAPI.Controllers
         /// <response code="404">Order not found</response>
         [HttpGet("{orderId}")]
         [ProducesResponseType(typeof(OrderDetail), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         public async Task<ActionResult<OrderDetail>> GetOrderById(Guid orderId)
         {
             var order = await _orderService.GetOrderByIdAsync(orderId);
@@ -92,7 +92,12 @@ namespace OrderService.WebAPI.Controllers
             }
             else
             {
-                return NotFound();
+                return Problem(
+                    title: "Order not found",
+                    detail: $"No order found with ID: {orderId}",
+                    statusCode: StatusCodes.Status404NotFound,
+                    instance: HttpContext.Request.Path
+                );
             }
         }
 
@@ -105,7 +110,7 @@ namespace OrderService.WebAPI.Controllers
         /// <response code="400">Invalid status name provided</response>
         [HttpGet("status/{statusName}")]
         [ProducesResponseType(typeof(IEnumerable<OrderSummary>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<IEnumerable<OrderSummary>>> GetOrdersByStatus([FromRoute] string statusName)
         {
             var request = new GetOrdersByStatusRequest { StatusName = statusName };
@@ -127,7 +132,7 @@ namespace OrderService.WebAPI.Controllers
         /// <response code="400">Invalid year or month parameters</response>
         [HttpGet("profit/monthly")]
         [ProducesResponseType(typeof(IEnumerable<ProfitByMonthDto>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<IEnumerable<ProfitByMonthDto>>> GetProfitByMonth([FromQuery] int? year, [FromQuery] int? month)
         {
             var request = new GetProfitByMonthRequest { Year = year, Month = month };
@@ -151,9 +156,9 @@ namespace OrderService.WebAPI.Controllers
         /// <response code="500">Internal server error occurred</response>
         [HttpPatch("{orderId}/status")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> UpdateOrderStatus([FromRoute] Guid orderId, [FromBody] UpdateOrderStatusRequest request)
         {
             // Set the OrderId from the route parameter
@@ -169,7 +174,12 @@ namespace OrderService.WebAPI.Controllers
             }
             else
             {
-                return NotFound(new { Message = "Order not found" });
+                return Problem(
+                    title: "Order not found",
+                    detail: $"No order found with ID: {request.OrderId} to update status",
+                    statusCode: StatusCodes.Status404NotFound,
+                    instance: HttpContext.Request.Path
+                );
             }
         }
     }
