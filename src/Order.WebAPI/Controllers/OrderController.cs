@@ -1,9 +1,11 @@
 ﻿using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Order.Model;
 using Order.Service;
 using OrderService.WebAPI.Models;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -26,8 +28,8 @@ namespace OrderService.WebAPI.Controllers
         /// <returns>A list of all order summaries</returns>
         /// <response code="200">Returns the list of orders</response>
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> Get()
+        [ProducesResponseType(typeof(IEnumerable<OrderSummary>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<IEnumerable<OrderSummary>>> Get()
         {
             var orders = await _orderService.GetOrdersAsync();
             return Ok(orders);
@@ -47,12 +49,9 @@ namespace OrderService.WebAPI.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request)
         {
-            // Validation happens automatically via FluentValidation pipeline
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
+            // FluentValidation automatically validates the request and returns 400 Bad Request if validation fails
+            // No need for manual ModelState.IsValid checks - validation happens before this method is called
+            
             // Map request to DTO
             var orderDto = new Order.Model.CreateOrderDto
             {
@@ -82,9 +81,9 @@ namespace OrderService.WebAPI.Controllers
         /// <response code="200">Order found and returned</response>
         /// <response code="404">Order not found</response>
         [HttpGet("{orderId}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(OrderDetail), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetOrderById(Guid orderId)
+        public async Task<ActionResult<OrderDetail>> GetOrderById(Guid orderId)
         {
             var order = await _orderService.GetOrderByIdAsync(orderId);
             if (order != null)
@@ -105,18 +104,15 @@ namespace OrderService.WebAPI.Controllers
         /// <response code="200">Orders found and returned</response>
         /// <response code="400">Invalid status name provided</response>
         [HttpGet("status/{statusName}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(IEnumerable<OrderSummary>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetOrdersByStatus([FromRoute] string statusName)
+        public async Task<ActionResult<IEnumerable<OrderSummary>>> GetOrdersByStatus([FromRoute] string statusName)
         {
             var request = new GetOrdersByStatusRequest { StatusName = statusName };
             
-            // Validation happens automatically via FluentValidation pipeline
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
+            // FluentValidation automatically validates the request and returns 400 Bad Request if validation fails
+            // No need for manual ModelState.IsValid checks - validation happens before this method is called
+            
             var orders = await _orderService.GetOrdersByStatusAsync(request.StatusName);
             return Ok(orders);
         }
@@ -130,18 +126,15 @@ namespace OrderService.WebAPI.Controllers
         /// <response code="200">Profit data calculated and returned</response>
         /// <response code="400">Invalid year or month parameters</response>
         [HttpGet("profit/monthly")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(IEnumerable<ProfitByMonthDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetProfitByMonth([FromQuery] int? year, [FromQuery] int? month)
+        public async Task<ActionResult<IEnumerable<ProfitByMonthDto>>> GetProfitByMonth([FromQuery] int? year, [FromQuery] int? month)
         {
             var request = new GetProfitByMonthRequest { Year = year, Month = month };
             
-            // Validation happens automatically via FluentValidation pipeline
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
+            // FluentValidation automatically validates the request and returns 400 Bad Request if validation fails
+            // No need for manual ModelState.IsValid checks - validation happens before this method is called
+            
             var profitData = await _orderService.GetProfitByMonthAsync(request.Year, request.Month);
             return Ok(profitData);
         }
@@ -166,12 +159,9 @@ namespace OrderService.WebAPI.Controllers
             // Set the OrderId from the route parameter
             request.OrderId = orderId;
             
-            // Validation happens automatically via FluentValidation pipeline
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
+            // FluentValidation automatically validates the request and returns 400 Bad Request if validation fails
+            // No need for manual ModelState.IsValid checks - validation happens before this method is called
+            
             var result = await _orderService.UpdateOrderStatusAsync(request.OrderId, request.StatusName);
             if (result)
             {
