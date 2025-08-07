@@ -1,4 +1,5 @@
 using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -38,9 +39,12 @@ namespace OrderService.WebAPI
 
             services.AddControllers();
             
-            // Configure FluentValidation
-            services.AddScoped<IValidator<GetOrdersByStatusRequest>, GetOrdersByStatusRequestValidator>();
-            services.AddScoped<IValidator<UpdateOrderStatusRequest>, UpdateOrderStatusRequestValidator>();
+            // Configure FluentValidation with automatic validation
+            services.AddFluentValidationAutoValidation()
+                    .AddFluentValidationClientsideAdapters();
+            
+            // Register validators automatically from assembly
+            services.AddValidatorsFromAssemblyContaining<GetOrdersByStatusRequestValidator>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

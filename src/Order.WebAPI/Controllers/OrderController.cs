@@ -13,16 +13,10 @@ namespace OrderService.WebAPI.Controllers
     public class OrderController : ControllerBase
     {
         private readonly IOrderService _orderService;
-        private readonly IValidator<GetOrdersByStatusRequest> _getOrdersByStatusValidator;
-        private readonly IValidator<UpdateOrderStatusRequest> _updateOrderStatusValidator;
 
-        public OrderController(IOrderService orderService, 
-            IValidator<GetOrdersByStatusRequest> getOrdersByStatusValidator,
-            IValidator<UpdateOrderStatusRequest> updateOrderStatusValidator)
+        public OrderController(IOrderService orderService)
         {
             _orderService = orderService;
-            _getOrdersByStatusValidator = getOrdersByStatusValidator;
-            _updateOrderStatusValidator = updateOrderStatusValidator;
         }
 
         [HttpGet]
@@ -56,13 +50,9 @@ namespace OrderService.WebAPI.Controllers
         {
             var request = new GetOrdersByStatusRequest { StatusName = statusName };
             
-            var validationResult = await _getOrdersByStatusValidator.ValidateAsync(request);
-            if (!validationResult.IsValid)
+            // Validation happens automatically via FluentValidation pipeline
+            if (!ModelState.IsValid)
             {
-                foreach (var error in validationResult.Errors)
-                {
-                    ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
-                }
                 return BadRequest(ModelState);
             }
 
@@ -80,13 +70,9 @@ namespace OrderService.WebAPI.Controllers
             // Set the OrderId from the route parameter
             request.OrderId = orderId;
             
-            var validationResult = await _updateOrderStatusValidator.ValidateAsync(request);
-            if (!validationResult.IsValid)
+            // Validation happens automatically via FluentValidation pipeline
+            if (!ModelState.IsValid)
             {
-                foreach (var error in validationResult.Errors)
-                {
-                    ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
-                }
                 return BadRequest(ModelState);
             }
 
