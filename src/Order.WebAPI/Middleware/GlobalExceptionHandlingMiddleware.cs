@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Order.WebAPI.Models;
 
 namespace OrderService.WebAPI.Middleware
 {
@@ -80,13 +81,5 @@ namespace OrderService.WebAPI.Middleware
 
             await context.Response.WriteAsync(jsonResponse);
         }
-    }
-
-    public class ErrorResponse
-    {
-        public int StatusCode { get; set; }
-        public string Message { get; set; }
-        public string Details { get; set; }
-        public DateTime Timestamp { get; set; } = DateTime.UtcNow;
     }
 }
