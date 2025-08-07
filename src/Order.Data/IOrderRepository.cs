@@ -16,5 +16,7 @@ namespace Order.Data
         Task<UpdateOrderStatusResult> UpdateOrderStatusAsync(Guid orderId, string statusName);
 
         Task<(CreateOrderResult Result, Guid? OrderId)> CreateOrderAsync(CreateOrderDto orderDto);
+
+        Task<IEnumerable<ProfitByMonthDto>> GetProfitByMonthAsync(int? year, int? month);
     }
 }

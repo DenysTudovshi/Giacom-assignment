@@ -209,5 +209,42 @@ namespace Order.Data
                 return (CreateOrderResult.CreationFailed, null);
             }
         }
+
+        public async Task<IEnumerable<ProfitByMonthDto>> GetProfitByMonthAsync(int? year, int? month)
+        {
+            var query = _orderContext.Order
+                .Include(x => x.Items)
+                    .ThenInclude(i => i.Product)
+                .Include(x => x.Status)
+                .Where(x => x.Status.Name.ToLower() == "completed");
+
+            // Apply year filter if specified
+            if (year.HasValue)
+            {
+                query = query.Where(x => x.CreatedDate.Year == year.Value);
+            }
+
+            // Apply month filter if specified
+            if (month.HasValue)
+            {
+                query = query.Where(x => x.CreatedDate.Month == month.Value);
+            }
+
+            var profitData = await query
+                .GroupBy(x => new { x.CreatedDate.Year, x.CreatedDate.Month })
+                .Select(g => new ProfitByMonthDto
+                {
+                    Year = g.Key.Year,
+                    Month = g.Key.Month,
+                    MonthName = System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(g.Key.Month),
+                    TotalProfit = g.Sum(o => o.Items.Sum(i => (i.Product.UnitPrice - i.Product.UnitCost) * i.Quantity.Value)),
+                    OrderCount = g.Count()
+                })
+                .OrderByDescending(x => x.Year)
+                .ThenByDescending(x => x.Month)
+                .ToListAsync();
+
+            return profitData;
+        }
     }
 }

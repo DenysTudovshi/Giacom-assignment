@@ -106,5 +106,33 @@ namespace Order.Service
                     throw new InvalidOperationException("Unknown error occurred while creating order");
             }
         }
+
+        public async Task<IEnumerable<ProfitByMonthDto>> GetProfitByMonthAsync(int? year, int? month)
+        {
+            // Input validation - this is business logic, belongs in service layer
+            if (year.HasValue && year.Value < 1900)
+            {
+                throw new ArgumentException("Year must be greater than 1900", nameof(year));
+            }
+
+            if (year.HasValue && year.Value > DateTime.Now.Year + 1)
+            {
+                throw new ArgumentException($"Year cannot be greater than {DateTime.Now.Year + 1}", nameof(year));
+            }
+
+            if (month.HasValue && (month.Value < 1 || month.Value > 12))
+            {
+                throw new ArgumentException("Month must be between 1 and 12", nameof(month));
+            }
+
+            if (month.HasValue && !year.HasValue)
+            {
+                throw new ArgumentException("Year is required when Month is specified", nameof(year));
+            }
+
+            // Call repository for data operation
+            var profitData = await _orderRepository.GetProfitByMonthAsync(year, month);
+            return profitData;
+        }
     }
 }
