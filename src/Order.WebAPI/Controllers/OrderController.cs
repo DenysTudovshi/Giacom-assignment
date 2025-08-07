@@ -13,12 +13,16 @@ namespace OrderService.WebAPI.Controllers
     public class OrderController : ControllerBase
     {
         private readonly IOrderService _orderService;
-        private readonly IValidator<GetOrdersByStatusRequest> _validator;
+        private readonly IValidator<GetOrdersByStatusRequest> _getOrdersByStatusValidator;
+        private readonly IValidator<UpdateOrderStatusRequest> _updateOrderStatusValidator;
 
-        public OrderController(IOrderService orderService, IValidator<GetOrdersByStatusRequest> validator)
+        public OrderController(IOrderService orderService, 
+            IValidator<GetOrdersByStatusRequest> getOrdersByStatusValidator,
+            IValidator<UpdateOrderStatusRequest> updateOrderStatusValidator)
         {
             _orderService = orderService;
-            _validator = validator;
+            _getOrdersByStatusValidator = getOrdersByStatusValidator;
+            _updateOrderStatusValidator = updateOrderStatusValidator;
         }
 
         [HttpGet]
@@ -52,7 +56,7 @@ namespace OrderService.WebAPI.Controllers
         {
             var request = new GetOrdersByStatusRequest { StatusName = statusName };
             
-            var validationResult = await _validator.ValidateAsync(request);
+            var validationResult = await _getOrdersByStatusValidator.ValidateAsync(request);
             if (!validationResult.IsValid)
             {
                 foreach (var error in validationResult.Errors)
@@ -64,6 +68,37 @@ namespace OrderService.WebAPI.Controllers
 
             var orders = await _orderService.GetOrdersByStatusAsync(request.StatusName);
             return Ok(orders);
+        }
+
+        [HttpPatch("{orderId}/status")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> UpdateOrderStatus([FromRoute] Guid orderId, [FromBody] UpdateOrderStatusRequest request)
+        {
+            // Set the OrderId from the route parameter
+            request.OrderId = orderId;
+            
+            var validationResult = await _updateOrderStatusValidator.ValidateAsync(request);
+            if (!validationResult.IsValid)
+            {
+                foreach (var error in validationResult.Errors)
+                {
+                    ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+                }
+                return BadRequest(ModelState);
+            }
+
+            var result = await _orderService.UpdateOrderStatusAsync(request.OrderId, request.StatusName);
+            if (result)
+            {
+                return Ok(new { Message = $"Order status updated successfully to '{request.StatusName}'" });
+            }
+            else
+            {
+                return NotFound(new { Message = "Order not found" });
+            }
         }
     }
 }
