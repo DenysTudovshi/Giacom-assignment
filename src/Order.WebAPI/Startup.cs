@@ -40,6 +40,7 @@ namespace OrderService.WebAPI
             
             // Configure FluentValidation
             services.AddScoped<IValidator<GetOrdersByStatusRequest>, GetOrdersByStatusRequestValidator>();
+            services.AddScoped<IValidator<UpdateOrderStatusRequest>, UpdateOrderStatusRequestValidator>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
