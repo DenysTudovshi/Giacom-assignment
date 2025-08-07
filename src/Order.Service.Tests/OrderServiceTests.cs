@@ -19,6 +19,7 @@ namespace Order.Service.Tests
         private DbConnection _connection;
 
         private readonly byte[] _orderStatusCreatedId = Guid.NewGuid().ToByteArray();
+        private readonly byte[] _orderStatusFailedId = Guid.NewGuid().ToByteArray();
         private readonly byte[] _orderServiceEmailId = Guid.NewGuid().ToByteArray();
         private readonly byte[] _orderProductEmailId = Guid.NewGuid().ToByteArray();
 
@@ -154,6 +155,49 @@ namespace Order.Service.Tests
             Assert.AreEqual(1.8m, order.TotalPrice);
         }
 
+        [Test]
+        public async Task GetOrdersByStatusAsync_ReturnsOrdersWithSpecifiedStatus()
+        {
+            // Arrange
+            var createdOrderId = Guid.NewGuid();
+            await AddOrderWithStatus(createdOrderId, 1, _orderStatusCreatedId);
+
+            var failedOrderId = Guid.NewGuid();
+            await AddOrderWithStatus(failedOrderId, 2, _orderStatusFailedId);
+
+            // Act
+            var failedOrders = await _orderService.GetOrdersByStatusAsync("Failed");
+
+            // Assert
+            Assert.AreEqual(1, failedOrders.Count());
+            Assert.AreEqual(failedOrderId, failedOrders.First().Id);
+            Assert.AreEqual("Failed", failedOrders.First().StatusName);
+        }
+
+        [Test]
+        public async Task GetOrdersByStatusAsync_IsCaseInsensitive()
+        {
+            // Arrange
+            var failedOrderId = Guid.NewGuid();
+            await AddOrderWithStatus(failedOrderId, 1, _orderStatusFailedId);
+
+            // Act
+            var failedOrders = await _orderService.GetOrdersByStatusAsync("FAILED");
+
+            // Assert
+            Assert.AreEqual(1, failedOrders.Count());
+            Assert.AreEqual(failedOrderId, failedOrders.First().Id);
+        }
+
+        [Test]
+        public void GetOrdersByStatusAsync_ThrowsArgumentExceptionForNullOrEmptyStatus()
+        {
+            // Act & Assert
+            Assert.ThrowsAsync<ArgumentException>(() => _orderService.GetOrdersByStatusAsync(null));
+            Assert.ThrowsAsync<ArgumentException>(() => _orderService.GetOrdersByStatusAsync(""));
+            Assert.ThrowsAsync<ArgumentException>(() => _orderService.GetOrdersByStatusAsync("   "));
+        }
+
         private async Task AddOrder(Guid orderId, int quantity)
         {
             var orderIdBytes = orderId.ToByteArray();
@@ -178,12 +222,42 @@ namespace Order.Service.Tests
             await _orderContext.SaveChangesAsync();
         }
 
+        private async Task AddOrderWithStatus(Guid orderId, int quantity, byte[] statusId)
+        {
+            var orderIdBytes = orderId.ToByteArray();
+            _orderContext.Order.Add(new Data.Entities.Order
+            {
+                Id = orderIdBytes,
+                ResellerId = Guid.NewGuid().ToByteArray(),
+                CustomerId = Guid.NewGuid().ToByteArray(),
+                CreatedDate = DateTime.Now,
+                StatusId = statusId,
+            });
+
+            _orderContext.OrderItem.Add(new OrderItem
+            {
+                Id = Guid.NewGuid().ToByteArray(),
+                OrderId = orderIdBytes,
+                ServiceId = _orderServiceEmailId,
+                ProductId = _orderProductEmailId,
+                Quantity = quantity
+            });
+
+            await _orderContext.SaveChangesAsync();
+        }
+
         private async Task AddReferenceDataAsync(OrderContext orderContext)
         {
             orderContext.OrderStatus.Add(new OrderStatus
             {
                 Id = _orderStatusCreatedId,
                 Name = "Created",
+            });
+
+            orderContext.OrderStatus.Add(new OrderStatus
+            {
+                Id = _orderStatusFailedId,
+                Name = "Failed",
             });
 
             orderContext.OrderService.Add(new Data.Entities.OrderService
