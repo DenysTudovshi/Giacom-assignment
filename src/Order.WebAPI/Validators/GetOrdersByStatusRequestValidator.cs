@@ -1,4 +1,5 @@
 using FluentValidation;
+using Order.Data;
 using OrderService.WebAPI.Models;
 using System;
 using System.Linq;
@@ -7,7 +8,7 @@ namespace OrderService.WebAPI.Validators
 {
     public class GetOrdersByStatusRequestValidator : AbstractValidator<GetOrdersByStatusRequest>
     {
-        private static readonly string[] ValidStatuses = { "Pending", "Processing", "Shipped", "Delivered", "Cancelled", "Failed" };
+        private static readonly string[] ValidStatuses = OrderStatusTypeExtensions.GetAllStatusNames();
 
         public GetOrdersByStatusRequestValidator()
         {
@@ -23,8 +24,7 @@ namespace OrderService.WebAPI.Validators
             if (string.IsNullOrWhiteSpace(statusName))
                 return false;
 
-            return ValidStatuses.Any(validStatus => 
-                string.Equals(statusName, validStatus, StringComparison.OrdinalIgnoreCase));
+            return OrderStatusTypeExtensions.TryParseStatusName(statusName, out _);
         }
     }
 }

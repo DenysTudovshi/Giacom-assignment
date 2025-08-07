@@ -97,7 +97,7 @@ namespace OrderService.WebAPI.Controllers
         /// <summary>
         /// Retrieves all orders with the specified status
         /// </summary>
-        /// <param name="statusName">The status name to filter by (e.g., 'Pending', 'Processing', 'Completed')</param>
+        /// <param name="statusName">The status name to filter by (e.g., 'Created', 'Failed', 'In Progress')</param>
         /// <returns>A list of orders matching the specified status</returns>
         /// <response code="200">Orders found and returned</response>
         /// <response code="400">Invalid status name provided</response>

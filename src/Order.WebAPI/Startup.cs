@@ -102,10 +102,11 @@ namespace OrderService.WebAPI
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            // Always use our custom global exception handling middleware
+            app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
+            
             if (env.IsDevelopment())
             {
-                app.UseDeveloperExceptionPage();
-                
                 // Enable Swagger in development
                 app.UseSwagger();
                 app.UseSwaggerUI(c =>
@@ -117,11 +118,6 @@ namespace OrderService.WebAPI
                     c.EnableFilter();
                     c.ShowExtensions();
                 });
-            }
-            else
-            {
-                // Use global exception handling middleware in non-development environments
-                app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
             }
 
             app.UseHttpsRedirection();

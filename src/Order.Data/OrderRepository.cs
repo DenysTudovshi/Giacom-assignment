@@ -81,10 +81,18 @@ namespace Order.Data
                 throw new ArgumentException("Status name cannot be null or empty", nameof(statusName));
             }
 
+            // Validate that the status name is a valid enum value
+            if (!OrderStatusTypeExtensions.TryParseStatusName(statusName, out var statusType))
+            {
+                throw new ArgumentException($"Invalid status name: {statusName}", nameof(statusName));
+            }
+
+            var validStatusName = statusType.GetStatusName();
+
             var orders = await _orderContext.Order
                 .Include(x => x.Items)
                 .Include(x => x.Status)
-                .Where(x => x.Status.Name.ToLower() == statusName.ToLower())
+                .Where(x => x.Status.Name.ToLower() == validStatusName.ToLower())
                 .Select(x => new OrderSummary
                 {
                     Id = new Guid(x.Id),
@@ -117,9 +125,17 @@ namespace Order.Data
                 return UpdateOrderStatusResult.OrderNotFound;
             }
 
+            // Validate that the status name is a valid enum value
+            if (!OrderStatusTypeExtensions.TryParseStatusName(statusName, out var statusType))
+            {
+                return UpdateOrderStatusResult.StatusNotFound;
+            }
+
+            var validStatusName = statusType.GetStatusName();
+
             // Find the status by name
             var status = await _orderContext.OrderStatus
-                .FirstOrDefaultAsync(s => s.Name.ToLower() == statusName.ToLower());
+                .FirstOrDefaultAsync(s => s.Name.ToLower() == validStatusName.ToLower());
 
             if (status == null)
             {
@@ -142,11 +158,12 @@ namespace Order.Data
 
         public async Task<(CreateOrderResult Result, Guid? OrderId)> CreateOrderAsync(CreateOrderDto orderDto)
         {
-            // Get the "Pending" status for new orders
-            var pendingStatus = await _orderContext.OrderStatus
-                .FirstOrDefaultAsync(s => s.Name.ToLower() == "pending");
+                    // Get the "Created" status for new orders
+        var createdStatusName = OrderStatusType.Created.GetStatusName();
+        var createdStatus = await _orderContext.OrderStatus
+            .FirstOrDefaultAsync(s => s.Name.ToLower() == createdStatusName.ToLower());
 
-            if (pendingStatus == null)
+            if (createdStatus == null)
             {
                 return (CreateOrderResult.CreationFailed, null);
             }
@@ -180,7 +197,7 @@ namespace Order.Data
                 Id = orderId.ToByteArray(),
                 ResellerId = orderDto.ResellerId.ToByteArray(),
                 CustomerId = orderDto.CustomerId.ToByteArray(),
-                StatusId = pendingStatus.Id,
+                StatusId = createdStatus.Id,
                 CreatedDate = DateTime.UtcNow
             };
 
@@ -216,7 +233,7 @@ namespace Order.Data
                 .Include(x => x.Items)
                     .ThenInclude(i => i.Product)
                 .Include(x => x.Status)
-                .Where(x => x.Status.Name.ToLower() == "completed");
+                .Where(x => x.Status.Name.ToLower() == OrderStatusType.Completed.GetStatusName().ToLower());
 
             // Apply year filter if specified
             if (year.HasValue)

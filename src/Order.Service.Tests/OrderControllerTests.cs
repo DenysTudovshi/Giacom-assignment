@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using NUnit.Framework;
+using Order.Data;
 using Order.Model;
 using Order.Service;
 using OrderService.WebAPI.Controllers;
@@ -59,7 +60,7 @@ namespace Order.Service.Tests
                     Id = Guid.NewGuid(), 
                     ResellerId = Guid.NewGuid(), 
                     CustomerId = Guid.NewGuid(),
-                    StatusName = "Pending",
+                    StatusName = OrderStatusType.Pending.GetStatusName(),
                     ItemCount = 1,
                     TotalCost = 10.50m,
                     TotalPrice = 12.00m,
@@ -108,7 +109,7 @@ namespace Order.Service.Tests
                 Id = orderId,
                 ResellerId = Guid.NewGuid(),
                 CustomerId = Guid.NewGuid(),
-                StatusName = "Pending",
+                StatusName = OrderStatusType.Pending.GetStatusName(),
                 TotalCost = 10.50m,
                 TotalPrice = 12.00m,
                 CreatedDate = DateTime.UtcNow,
@@ -175,7 +176,7 @@ namespace Order.Service.Tests
         public async Task GetOrdersByStatus_ValidStatus_ReturnsOkWithOrders()
         {
             // Arrange
-            var statusName = "Pending";
+            var statusName = OrderStatusType.Pending.GetStatusName();
             var orders = new List<OrderSummary>
             {
                 new OrderSummary 
@@ -392,7 +393,7 @@ namespace Order.Service.Tests
             var orderId = Guid.NewGuid();
             var request = new UpdateOrderStatusRequest
             {
-                StatusName = "Processing"
+                StatusName = OrderStatusType.Processing.GetStatusName()
             };
 
             _mockOrderService.Setup(s => s.UpdateOrderStatusAsync(orderId, request.StatusName))
@@ -422,7 +423,7 @@ namespace Order.Service.Tests
             var orderId = Guid.NewGuid();
             var request = new UpdateOrderStatusRequest
             {
-                StatusName = "Processing"
+                StatusName = OrderStatusType.Processing.GetStatusName()
             };
 
             _mockOrderService.Setup(s => s.UpdateOrderStatusAsync(orderId, request.StatusName))
@@ -470,7 +471,7 @@ namespace Order.Service.Tests
             var orderId = Guid.NewGuid();
             var request = new UpdateOrderStatusRequest
             {
-                StatusName = "Processing"
+                StatusName = OrderStatusType.Processing.GetStatusName()
             };
 
             _mockOrderService.Setup(s => s.UpdateOrderStatusAsync(orderId, request.StatusName))

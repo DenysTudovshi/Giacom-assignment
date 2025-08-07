@@ -168,12 +168,12 @@ namespace Order.Service.Tests
             await AddOrderWithStatus(failedOrderId, 2, _orderStatusFailedId);
 
             // Act
-            var failedOrders = await _orderService.GetOrdersByStatusAsync("Failed");
+            var failedOrders = await _orderService.GetOrdersByStatusAsync(OrderStatusType.Failed.GetStatusName());
 
             // Assert
             Assert.AreEqual(1, failedOrders.Count());
             Assert.AreEqual(failedOrderId, failedOrders.First().Id);
-            Assert.AreEqual("Failed", failedOrders.First().StatusName);
+            Assert.AreEqual(OrderStatusType.Failed.GetStatusName(), failedOrders.First().StatusName);
         }
 
         [Test]
@@ -235,7 +235,7 @@ namespace Order.Service.Tests
             await AddOrder(orderId, 1);
 
             // Act
-            var result = await _orderService.UpdateOrderStatusAsync(orderId, "Processing");
+            var result = await _orderService.UpdateOrderStatusAsync(orderId, OrderStatusType.Processing.GetStatusName());
 
             // Assert
             Assert.IsTrue(result);
@@ -245,7 +245,7 @@ namespace Order.Service.Tests
         public void UpdateOrderStatusAsync_EmptyOrderId_ThrowsArgumentException()
         {
             // Act & Assert
-            var ex = Assert.ThrowsAsync<ArgumentException>(() => _orderService.UpdateOrderStatusAsync(Guid.Empty, "Processing"));
+            var ex = Assert.ThrowsAsync<ArgumentException>(() => _orderService.UpdateOrderStatusAsync(Guid.Empty, OrderStatusType.Processing.GetStatusName()));
             Assert.AreEqual("Order ID cannot be empty (Parameter 'orderId')", ex.Message);
         }
 
@@ -280,7 +280,7 @@ namespace Order.Service.Tests
             var nonExistentOrderId = Guid.NewGuid();
 
             // Act
-            var result = await _orderService.UpdateOrderStatusAsync(nonExistentOrderId, "Processing");
+            var result = await _orderService.UpdateOrderStatusAsync(nonExistentOrderId, OrderStatusType.Processing.GetStatusName());
 
             // Assert
             Assert.IsFalse(result);
@@ -467,7 +467,7 @@ namespace Order.Service.Tests
         {
             // Arrange
             var orderId = Guid.NewGuid();
-            await AddOrderWithStatusAndDate(orderId, 1, "Completed", DateTime.UtcNow);
+            await AddOrderWithStatusAndDate(orderId, 1, OrderStatusType.Completed.GetStatusName(), DateTime.UtcNow);
 
             // Act
             var profitData = await _orderService.GetProfitByMonthAsync(DateTime.UtcNow.Year, DateTime.UtcNow.Month);
@@ -528,10 +528,10 @@ namespace Order.Service.Tests
         {
             // Arrange
             var orderId1 = Guid.NewGuid();
-            await AddOrderWithStatusAndDate(orderId1, 1, "Completed", DateTime.UtcNow);
+            await AddOrderWithStatusAndDate(orderId1, 1, OrderStatusType.Completed.GetStatusName(), DateTime.UtcNow);
             
             var orderId2 = Guid.NewGuid();
-            await AddOrderWithStatusAndDate(orderId2, 1, "Completed", DateTime.UtcNow.AddYears(-1));
+            await AddOrderWithStatusAndDate(orderId2, 1, OrderStatusType.Completed.GetStatusName(), DateTime.UtcNow.AddYears(-1));
 
             // Act
             var profitData = await _orderService.GetProfitByMonthAsync(null, null);
@@ -636,32 +636,32 @@ namespace Order.Service.Tests
             orderContext.OrderStatus.Add(new OrderStatus
             {
                 Id = _orderStatusCreatedId,
-                Name = "Created",
+                Name = OrderStatusType.Created.GetStatusName(),
             });
 
             orderContext.OrderStatus.Add(new OrderStatus
             {
                 Id = _orderStatusFailedId,
-                Name = "Failed",
+                Name = OrderStatusType.Failed.GetStatusName(),
             });
 
             // Add additional statuses for testing
             orderContext.OrderStatus.Add(new OrderStatus
             {
                 Id = Guid.NewGuid().ToByteArray(),
-                Name = "Pending",
+                Name = OrderStatusType.Pending.GetStatusName(),
             });
 
             orderContext.OrderStatus.Add(new OrderStatus
             {
                 Id = Guid.NewGuid().ToByteArray(),
-                Name = "Processing",
+                Name = OrderStatusType.Processing.GetStatusName(),
             });
 
             orderContext.OrderStatus.Add(new OrderStatus
             {
                 Id = Guid.NewGuid().ToByteArray(),
-                Name = "Completed",
+                Name = OrderStatusType.Completed.GetStatusName(),
             });
 
             orderContext.OrderService.Add(new Data.Entities.OrderService
