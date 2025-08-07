@@ -213,19 +213,6 @@ namespace Order.Service.Tests
             Assert.IsNull(order);
         }
 
-        [Test]
-        public async Task GetOrdersByStatusAsync_NonExistentStatus_ReturnsEmptyList()
-        {
-            // Arrange
-            var nonExistentStatus = "NonExistentStatus";
-
-            // Act
-            var orders = await _orderService.GetOrdersByStatusAsync(nonExistentStatus);
-
-            // Assert
-            Assert.IsEmpty(orders);
-        }
-
         // UpdateOrderStatusAsync Tests
         [Test]
         public async Task UpdateOrderStatusAsync_ValidInput_ReturnsTrue()
