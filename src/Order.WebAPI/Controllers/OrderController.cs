@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Order.Service;
 using OrderService.WebAPI.Models;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace OrderService.WebAPI.Controllers
@@ -25,6 +26,39 @@ namespace OrderService.WebAPI.Controllers
         {
             var orders = await _orderService.GetOrdersAsync();
             return Ok(orders);
+        }
+
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request)
+        {
+            // Validation happens automatically via FluentValidation pipeline
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            // Map request to DTO
+            var orderDto = new Order.Model.CreateOrderDto
+            {
+                ResellerId = request.ResellerId,
+                CustomerId = request.CustomerId,
+                Items = request.Items.Select(item => new Order.Model.CreateOrderItemDto
+                {
+                    ProductId = item.ProductId,
+                    ServiceId = item.ServiceId,
+                    Quantity = item.Quantity
+                }).ToList()
+            };
+
+            var orderId = await _orderService.CreateOrderAsync(orderDto);
+            
+            return CreatedAtAction(
+                nameof(GetOrderById), 
+                new { orderId = orderId }, 
+                new { OrderId = orderId, Message = "Order created successfully" });
         }
 
         [HttpGet("{orderId}")]
