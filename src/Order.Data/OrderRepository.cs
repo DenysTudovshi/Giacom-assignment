@@ -102,5 +102,42 @@ namespace Order.Data
 
             return orders;
         }
+
+        public async Task<UpdateOrderStatusResult> UpdateOrderStatusAsync(Guid orderId, string statusName)
+        {
+            var orderIdBytes = orderId.ToByteArray();
+
+            // Find the order
+            var order = await _orderContext.Order
+                .Where(x => _orderContext.Database.IsInMemory() ? x.Id.SequenceEqual(orderIdBytes) : x.Id == orderIdBytes)
+                .FirstOrDefaultAsync();
+
+            if (order == null)
+            {
+                return UpdateOrderStatusResult.OrderNotFound;
+            }
+
+            // Find the status by name
+            var status = await _orderContext.OrderStatus
+                .FirstOrDefaultAsync(s => s.Name.ToLower() == statusName.ToLower());
+
+            if (status == null)
+            {
+                return UpdateOrderStatusResult.StatusNotFound;
+            }
+
+            // Update the order status
+            order.StatusId = status.Id;
+
+            try
+            {
+                await _orderContext.SaveChangesAsync();
+                return UpdateOrderStatusResult.Success;
+            }
+            catch
+            {
+                return UpdateOrderStatusResult.UpdateFailed;
+            }
+        }
     }
 }

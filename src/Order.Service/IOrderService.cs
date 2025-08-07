@@ -1,4 +1,5 @@
-﻿using Order.Model;
+﻿using Order.Data;
+using Order.Model;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -12,5 +13,7 @@ namespace Order.Service
         Task<OrderDetail> GetOrderByIdAsync(Guid orderId);
 
         Task<IEnumerable<OrderSummary>> GetOrdersByStatusAsync(string statusName);
+
+        Task<bool> UpdateOrderStatusAsync(Guid orderId, string statusName);
     }
 }
