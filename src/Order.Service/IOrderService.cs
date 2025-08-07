@@ -15,5 +15,7 @@ namespace Order.Service
         Task<IEnumerable<OrderSummary>> GetOrdersByStatusAsync(string statusName);
 
         Task<bool> UpdateOrderStatusAsync(Guid orderId, string statusName);
+
+        Task<Guid> CreateOrderAsync(CreateOrderDto orderDto);
     }
 }

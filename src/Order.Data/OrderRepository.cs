@@ -139,5 +139,75 @@ namespace Order.Data
                 return UpdateOrderStatusResult.UpdateFailed;
             }
         }
+
+        public async Task<(CreateOrderResult Result, Guid? OrderId)> CreateOrderAsync(CreateOrderDto orderDto)
+        {
+            // Get the "Pending" status for new orders
+            var pendingStatus = await _orderContext.OrderStatus
+                .FirstOrDefaultAsync(s => s.Name.ToLower() == "pending");
+
+            if (pendingStatus == null)
+            {
+                return (CreateOrderResult.CreationFailed, null);
+            }
+
+            // Validate that all products exist
+            var productIds = orderDto.Items.Select(i => i.ProductId.ToByteArray()).ToList();
+            var existingProductsCount = await _orderContext.OrderProduct
+                .Where(p => productIds.Any(pid => _orderContext.Database.IsInMemory() ? p.Id.SequenceEqual(pid) : p.Id == pid))
+                .CountAsync();
+
+            if (existingProductsCount != orderDto.Items.Count)
+            {
+                return (CreateOrderResult.ProductNotFound, null);
+            }
+
+            // Validate that all services exist
+            var serviceIds = orderDto.Items.Select(i => i.ServiceId.ToByteArray()).ToList();
+            var existingServicesCount = await _orderContext.OrderService
+                .Where(s => serviceIds.Any(sid => _orderContext.Database.IsInMemory() ? s.Id.SequenceEqual(sid) : s.Id == sid))
+                .CountAsync();
+
+            if (existingServicesCount != orderDto.Items.Count)
+            {
+                return (CreateOrderResult.ServiceNotFound, null);
+            }
+
+            // Create the order
+            var orderId = Guid.NewGuid();
+            var order = new Entities.Order
+            {
+                Id = orderId.ToByteArray(),
+                ResellerId = orderDto.ResellerId.ToByteArray(),
+                CustomerId = orderDto.CustomerId.ToByteArray(),
+                StatusId = pendingStatus.Id,
+                CreatedDate = DateTime.UtcNow
+            };
+
+            // Create order items
+            foreach (var itemDto in orderDto.Items)
+            {
+                var orderItem = new Entities.OrderItem
+                {
+                    Id = Guid.NewGuid().ToByteArray(),
+                    OrderId = order.Id,
+                    ProductId = itemDto.ProductId.ToByteArray(),
+                    ServiceId = itemDto.ServiceId.ToByteArray(),
+                    Quantity = itemDto.Quantity
+                };
+                order.Items.Add(orderItem);
+            }
+
+            try
+            {
+                _orderContext.Order.Add(order);
+                await _orderContext.SaveChangesAsync();
+                return (CreateOrderResult.Success, orderId);
+            }
+            catch
+            {
+                return (CreateOrderResult.CreationFailed, null);
+            }
+        }
     }
 }
