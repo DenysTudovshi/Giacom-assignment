@@ -73,5 +73,34 @@ namespace Order.Data
             
             return order;
         }
+
+        public async Task<IEnumerable<OrderSummary>> GetOrdersByStatusAsync(string statusName)
+        {
+            if (string.IsNullOrWhiteSpace(statusName))
+            {
+                throw new ArgumentException("Status name cannot be null or empty", nameof(statusName));
+            }
+
+            var orders = await _orderContext.Order
+                .Include(x => x.Items)
+                .Include(x => x.Status)
+                .Where(x => x.Status.Name.ToLower() == statusName.ToLower())
+                .Select(x => new OrderSummary
+                {
+                    Id = new Guid(x.Id),
+                    ResellerId = new Guid(x.ResellerId),
+                    CustomerId = new Guid(x.CustomerId),
+                    StatusId = new Guid(x.StatusId),
+                    StatusName = x.Status.Name,
+                    ItemCount = x.Items.Count,
+                    TotalCost = x.Items.Sum(i => i.Quantity * i.Product.UnitCost).Value,
+                    TotalPrice = x.Items.Sum(i => i.Quantity * i.Product.UnitPrice).Value,
+                    CreatedDate = x.CreatedDate
+                })
+                .OrderByDescending(x => x.CreatedDate)
+                .ToListAsync();
+
+            return orders;
+        }
     }
 }
