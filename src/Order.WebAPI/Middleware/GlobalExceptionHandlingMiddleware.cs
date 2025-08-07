@@ -48,13 +48,13 @@ namespace OrderService.WebAPI.Middleware
                 case ArgumentException argEx:
                     response.StatusCode = (int)HttpStatusCode.BadRequest;
                     response.Message = "Invalid request parameter";
-                    response.Details = argEx.ParamName != null ? $"Parameter '{argEx.ParamName}' is invalid" : "One or more parameters are invalid";
+                    response.Details = argEx.Message;
                     break;
                 
-                case InvalidOperationException:
-                    response.StatusCode = (int)HttpStatusCode.BadRequest;
-                    response.Message = "Invalid operation";
-                    response.Details = "The requested operation cannot be performed";
+                case InvalidOperationException invOpEx:
+                    response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                    response.Message = "Operation failed";
+                    response.Details = invOpEx.Message;
                     break;
                 
                 default:
