@@ -1,3 +1,4 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -6,6 +7,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Order.Data;
 using Order.Service;
+using OrderService.WebAPI.Middleware;
+using OrderService.WebAPI.Models;
+using OrderService.WebAPI.Validators;
 
 namespace OrderService.WebAPI
 {
@@ -33,6 +37,9 @@ namespace OrderService.WebAPI
             services.AddScoped<IOrderRepository, OrderRepository>();
 
             services.AddControllers();
+            
+            // Configure FluentValidation
+            services.AddScoped<IValidator<GetOrdersByStatusRequest>, GetOrdersByStatusRequestValidator>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -41,6 +48,11 @@ namespace OrderService.WebAPI
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+            }
+            else
+            {
+                // Use global exception handling middleware in non-development environments
+                app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
             }
 
             app.UseHttpsRedirection();
