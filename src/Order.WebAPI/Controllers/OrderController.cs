@@ -20,6 +20,11 @@ namespace OrderService.WebAPI.Controllers
             _orderService = orderService;
         }
 
+        /// <summary>
+        /// Retrieves all orders in the system
+        /// </summary>
+        /// <returns>A list of all order summaries</returns>
+        /// <response code="200">Returns the list of orders</response>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> Get()
@@ -28,6 +33,14 @@ namespace OrderService.WebAPI.Controllers
             return Ok(orders);
         }
 
+        /// <summary>
+        /// Creates a new order with the specified items
+        /// </summary>
+        /// <param name="request">The order creation request containing reseller, customer, and items</param>
+        /// <returns>The created order ID and confirmation message</returns>
+        /// <response code="201">Order created successfully</response>
+        /// <response code="400">Invalid request data or validation errors</response>
+        /// <response code="500">Internal server error occurred</response>
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -61,6 +74,13 @@ namespace OrderService.WebAPI.Controllers
                 new { OrderId = orderId, Message = "Order created successfully" });
         }
 
+        /// <summary>
+        /// Retrieves a specific order by its unique identifier
+        /// </summary>
+        /// <param name="orderId">The unique identifier of the order</param>
+        /// <returns>The detailed order information</returns>
+        /// <response code="200">Order found and returned</response>
+        /// <response code="404">Order not found</response>
         [HttpGet("{orderId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -77,6 +97,13 @@ namespace OrderService.WebAPI.Controllers
             }
         }
 
+        /// <summary>
+        /// Retrieves all orders with the specified status
+        /// </summary>
+        /// <param name="statusName">The status name to filter by (e.g., 'Pending', 'Processing', 'Completed')</param>
+        /// <returns>A list of orders matching the specified status</returns>
+        /// <response code="200">Orders found and returned</response>
+        /// <response code="400">Invalid status name provided</response>
         [HttpGet("status/{statusName}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -94,6 +121,14 @@ namespace OrderService.WebAPI.Controllers
             return Ok(orders);
         }
 
+        /// <summary>
+        /// Calculates profit by month for all completed orders
+        /// </summary>
+        /// <param name="year">Optional year filter (e.g., 2024)</param>
+        /// <param name="month">Optional month filter (1-12). Requires year to be specified.</param>
+        /// <returns>Monthly profit data including total profit and order count</returns>
+        /// <response code="200">Profit data calculated and returned</response>
+        /// <response code="400">Invalid year or month parameters</response>
         [HttpGet("profit/monthly")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -111,6 +146,16 @@ namespace OrderService.WebAPI.Controllers
             return Ok(profitData);
         }
 
+        /// <summary>
+        /// Updates the status of an existing order
+        /// </summary>
+        /// <param name="orderId">The unique identifier of the order to update</param>
+        /// <param name="request">The status update request containing the new status name</param>
+        /// <returns>Confirmation message of the status update</returns>
+        /// <response code="200">Order status updated successfully</response>
+        /// <response code="400">Invalid request data or status name</response>
+        /// <response code="404">Order not found</response>
+        /// <response code="500">Internal server error occurred</response>
         [HttpPatch("{orderId}/status")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
