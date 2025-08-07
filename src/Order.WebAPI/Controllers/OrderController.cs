@@ -94,6 +94,23 @@ namespace OrderService.WebAPI.Controllers
             return Ok(orders);
         }
 
+        [HttpGet("profit/monthly")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetProfitByMonth([FromQuery] int? year, [FromQuery] int? month)
+        {
+            var request = new GetProfitByMonthRequest { Year = year, Month = month };
+            
+            // Validation happens automatically via FluentValidation pipeline
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var profitData = await _orderService.GetProfitByMonthAsync(request.Year, request.Month);
+            return Ok(profitData);
+        }
+
         [HttpPatch("{orderId}/status")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
