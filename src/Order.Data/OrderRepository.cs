@@ -168,22 +168,20 @@ namespace Order.Data
                 return (CreateOrderResult.CreationFailed, null);
             }
 
-            // Validate that all products exist
+            // Validate that all products exist - load all products and validate in memory
+            var allProducts = await _orderContext.OrderProduct.ToListAsync();
             var productIds = orderDto.Items.Select(i => i.ProductId.ToByteArray()).ToList();
-            var existingProductsCount = await _orderContext.OrderProduct
-                .Where(p => productIds.Any(pid => _orderContext.Database.IsInMemory() ? p.Id.SequenceEqual(pid) : p.Id == pid))
-                .CountAsync();
+            var existingProductsCount = allProducts.Count(p => productIds.Any(pid => p.Id.SequenceEqual(pid)));
 
             if (existingProductsCount != orderDto.Items.Count)
             {
                 return (CreateOrderResult.ProductNotFound, null);
             }
 
-            // Validate that all services exist
+            // Validate that all services exist - load all services and validate in memory
+            var allServices = await _orderContext.OrderService.ToListAsync();
             var serviceIds = orderDto.Items.Select(i => i.ServiceId.ToByteArray()).ToList();
-            var existingServicesCount = await _orderContext.OrderService
-                .Where(s => serviceIds.Any(sid => _orderContext.Database.IsInMemory() ? s.Id.SequenceEqual(sid) : s.Id == sid))
-                .CountAsync();
+            var existingServicesCount = allServices.Count(s => serviceIds.Any(sid => s.Id.SequenceEqual(sid)));
 
             if (existingServicesCount != orderDto.Items.Count)
             {
