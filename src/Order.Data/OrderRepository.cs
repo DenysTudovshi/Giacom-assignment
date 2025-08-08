@@ -235,20 +235,26 @@ namespace Order.Data
                 .Include(x => x.Status)
                 .Where(x => x.Status.Name.ToLower() == OrderStatusType.Completed.GetStatusName().ToLower());
 
-            // Apply year filter if specified
-            if (year.HasValue)
+            // Apply date range filters instead of Year/Month properties to avoid MySQL EF Core translation issues
+            if (year.HasValue && month.HasValue)
             {
-                query = query.Where(x => x.CreatedDate.Year == year.Value);
+                var startDate = new DateTime(year.Value, month.Value, 1);
+                var endDate = startDate.AddMonths(1).AddDays(-1);
+                query = query.Where(x => x.CreatedDate >= startDate && x.CreatedDate <= endDate);
+            }
+            else if (year.HasValue)
+            {
+                var startDate = new DateTime(year.Value, 1, 1);
+                var endDate = new DateTime(year.Value, 12, 31);
+                query = query.Where(x => x.CreatedDate >= startDate && x.CreatedDate <= endDate);
             }
 
-            // Apply month filter if specified
-            if (month.HasValue)
-            {
-                query = query.Where(x => x.CreatedDate.Month == month.Value);
-            }
+            // Load the filtered orders into memory first
+            var orders = await query.ToListAsync();
 
-            var profitData = await query
-                .GroupBy(x => new { x.CreatedDate.Year, x.CreatedDate.Month })
+            // Process the data in memory to avoid complex SQL translation issues
+            var profitData = orders
+                .GroupBy(o => new { o.CreatedDate.Year, o.CreatedDate.Month })
                 .Select(g => new ProfitByMonthDto
                 {
                     Year = g.Key.Year,
@@ -259,7 +265,7 @@ namespace Order.Data
                 })
                 .OrderByDescending(x => x.Year)
                 .ThenByDescending(x => x.Month)
-                .ToListAsync();
+                .ToList();
 
             return profitData;
         }
