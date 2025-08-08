@@ -49,7 +49,7 @@ All four required API endpoints have been successfully implemented:
 - **Endpoint**: `GET /orders/status/{statusName}`
 - **Description**: Retrieves all orders with the specified status
 - **Parameters**: 
-  - `statusName` (string): Status name (e.g., 'Pending', 'Processing', 'Completed', 'Failed')
+  - `statusName` (string): Status name (e.g., 'Created', 'In Progress', 'Failed')
 - **Validation**: Status name is validated against available order statuses
 - **Response**: List of orders matching the specified status
 
